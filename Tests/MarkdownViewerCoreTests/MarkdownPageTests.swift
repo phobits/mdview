@@ -119,7 +119,7 @@ import Testing
     // A `---` that isn't on the first line stays a thematic break, not a card.
     let html = MarkdownPage.html(from: "Intro\n\n---\n\nMore")
     #expect(!html.contains("class=\"frontmatter\""))
-    #expect(html.contains("<hr>"))
+    #expect(html.contains("<hr />"))
 }
 
 @Test func escapesFrontmatterValues() {
@@ -160,4 +160,45 @@ import Testing
 
     let html = try MarkdownPage.html(contentsOf: url)
     #expect(html.contains("Caf"))
+}
+
+@Test func wideTablesAndCodeBlocksBreakOutOfTheReadingColumn() {
+    let css = MarkdownPage.css
+    // Prose stays in the narrow reading column …
+    #expect(css.contains("max-width: 760px"))
+    // … but top-level tables and code blocks may grow to the window width
+    // (minus a margin) before they fall back to a horizontal scrollbar.
+    #expect(css.contains("article > table, article > pre {"))
+    #expect(css.contains("width: max-content;"))
+    #expect(css.contains("min-width: 100%;"))
+    #expect(css.contains("max-width: calc(100vw - 64px);"))
+    #expect(css.contains("transform: translateX(-50%);"))
+}
+
+@Test func printLayoutDisablesTheBreakout() {
+    // Paper has no "window width": the breakout must not push content off the page.
+    let css = MarkdownPage.css
+    let print = css.range(of: "@media print").map { String(css[$0.lowerBound...]) } ?? ""
+    #expect(print.contains("article > table, article > pre { max-width: 100%; left: auto; transform: none; }"))
+}
+
+@Test func multiLineCodeSpanDoesNotBreakFollowingTables() {
+    // Regression (odoo-live newsletter-pipeline-review.md): a code span wrapped
+    // across a line break used to fall apart, its `<staging>` was taken for an
+    // unclosed HTML tag, and every table after it rendered as running text.
+    let html = MarkdownPage.html(from: """
+    | A | B |
+    |---|---|
+    | x | y |
+
+    text `cmd <staging> --list
+    <liste>` more text
+
+    | C | D |
+    |---|---|
+    | 1 | 2 |
+    """)
+    #expect(html.contains("<code>cmd &lt;staging&gt; --list &lt;liste&gt;</code>"))
+    #expect(html.components(separatedBy: "<table>").count - 1 == 2)
+    #expect(!html.contains("| C | D |"))
 }

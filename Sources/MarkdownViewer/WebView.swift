@@ -1,5 +1,6 @@
 import SwiftUI
 import WebKit
+import MarkdownViewerCore
 
 struct WebView: NSViewRepresentable {
     let html: String
@@ -44,6 +45,12 @@ struct WebView: NSViewRepresentable {
                      decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
             if navigationAction.navigationType == .linkActivated,
                let url = navigationAction.request.url {
+                // A jump within the page (footnote, `[x](#anchor)`) scrolls the
+                // preview; only links that leave the document open in the browser.
+                if LinkPolicy.staysInPage(url, pageURL: webView.url) {
+                    decisionHandler(.allow)
+                    return
+                }
                 NSWorkspace.shared.open(url)
                 decisionHandler(.cancel)
             } else {

@@ -51,7 +51,7 @@ This produces `dist/MarkdownViewer.app`, ad-hoc signs it, and registers it with 
 
 ## Project structure
 
-- `Sources/MarkdownViewerCore` — Markdown → styled HTML page (tested; uses [Ink](https://github.com/JohnSundell/Ink))
+- `Sources/MarkdownViewerCore` — Markdown → styled HTML page (tested; uses [cmark-gfm](https://github.com/swiftlang/swift-cmark), the CommonMark + GitHub Flavored Markdown parser GitHub renders with)
 - `Sources/MarkdownViewer` — SwiftUI document app showing the HTML in a `WKWebView`
 - `Sources/QuickLookPreview` — Quick Look extension rendering the same HTML for Finder's space-bar preview
 - `Resources/Info.plist` — declares the Markdown document type so Finder offers the app

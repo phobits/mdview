@@ -5,12 +5,17 @@ let package = Package(
     name: "MarkdownViewer",
     platforms: [.macOS(.v13)],
     dependencies: [
-        .package(url: "https://github.com/JohnSundell/Ink.git", from: "0.6.0")
+        // cmark-gfm, the CommonMark + GitHub Flavored Markdown reference parser
+        // (the one GitHub itself renders with), packaged by the Swift project.
+        .package(url: "https://github.com/swiftlang/swift-cmark.git", from: "0.9.0")
     ],
     targets: [
         .target(
             name: "MarkdownViewerCore",
-            dependencies: ["Ink"]
+            dependencies: [
+                .product(name: "cmark-gfm", package: "swift-cmark"),
+                .product(name: "cmark-gfm-extensions", package: "swift-cmark"),
+            ]
         ),
         .executableTarget(
             name: "MarkdownViewer",

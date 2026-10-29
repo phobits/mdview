@@ -1,5 +1,4 @@
 import Foundation
-import Ink
 
 public enum MarkdownPage {
     public static func html(contentsOf url: URL, allowRemoteImages: Bool = false) throws -> String {
@@ -11,7 +10,7 @@ public enum MarkdownPage {
 
     public static func html(from markdown: String, allowRemoteImages: Bool = false) -> String {
         let (frontmatter, body) = splitFrontmatter(markdown)
-        let bodyHTML = MarkdownParser().html(from: String(body))
+        let bodyHTML = MarkdownRenderer.html(from: String(body))
         let frontmatterHTML = frontmatter.map { renderFrontmatter(String($0)) } ?? ""
         return """
         <!DOCTYPE html>
@@ -309,7 +308,29 @@ public enum MarkdownPage {
         margin: 24px 0;
     }
     table { border-collapse: collapse; display: block; overflow-x: auto; }
+    /* Breakout: prose stays in the 760px reading column, but top-level tables
+       and code blocks may grow past it, centred on the column, up to the window
+       width minus a margin. Only beyond that do they scroll horizontally. Narrow
+       ones stay column-wide and left-aligned (min-width). Direct children only:
+       inside a list or quote, `left: 50%` would centre on the indented parent. */
+    article > table, article > pre {
+        width: max-content;
+        min-width: 100%;
+        max-width: calc(100vw - 64px);
+        position: relative;
+        left: 50%;
+        transform: translateX(-50%);
+    }
     th, td { border: 1px solid var(--border); padding: 6px 13px; }
+    /* GFM task lists: the checkbox replaces the bullet. */
+    li:has(> input[type="checkbox"]:first-child) { list-style: none; }
+    li > input[type="checkbox"]:first-child { margin: 0 0.4em 0 -1.4em; vertical-align: middle; }
+    .footnotes {
+        margin-top: 32px;
+        border-top: 1px solid var(--border);
+        font-size: 0.875em;
+        color: var(--muted);
+    }
     th { font-weight: 600; background: var(--code-bg); }
     .frontmatter {
         margin: 0 0 24px;
@@ -348,6 +369,7 @@ public enum MarkdownPage {
         a { color: #0969da; }
         code, pre { background: #f6f8fa; }
         pre { white-space: pre-wrap; word-wrap: break-word; }
+        article > table, article > pre { max-width: 100%; left: auto; transform: none; }
         pre code { background: none; }
         th { background: #f6f8fa; }
         h1, h2 { border-bottom-color: #d1d9e0; }
