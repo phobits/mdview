@@ -51,7 +51,7 @@ struct WebView: NSViewRepresentable {
                     decisionHandler(.allow)
                     return
                 }
-                NSWorkspace.shared.open(url)
+                if LinkPolicy.opensExternally(url) { NSWorkspace.shared.open(url) }
                 decisionHandler(.cancel)
             } else {
                 decisionHandler(.allow)
